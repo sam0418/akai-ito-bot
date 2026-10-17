@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# clasp: project binding and credentials (machine-specific)
+.clasp.json
+.clasprc.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+# Exported chat logs (private conversation data)
+akai-ito-log*.json
+data/

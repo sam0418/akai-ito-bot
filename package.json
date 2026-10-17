@@ -1,0 +1,22 @@
+{
+  "name": "akai-ito-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LINE group chat translation bot (zh-TW ⇄ ja) running on Google Apps Script",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "push": "clasp push -f",
+    "watch": "clasp push -f --watch",
+    "pull": "clasp pull",
+    "status": "clasp show-file-status",
+    "open": "clasp open-script",
+    "deployments": "clasp list-deployments",
+    "redeploy": "clasp update-deployment"
+  },
+  "devDependencies": {
+    "@google/clasp": "^3.4.1",
+    "@types/google-apps-script": "^2.0.13"
+  }
+}

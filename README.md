@@ -104,6 +104,7 @@ akai-ito-bot/
 ├── scripts/deploy.mjs     # npm run deploy: push + publish in one step
 ├── jsconfig.json          # Editor type hints for Apps Script globals
 ├── .clasp.json.example    # Template for linking to an Apps Script project
+├── experiments/           # Research experiments, isolated from the bot (not pushed)
 └── src/                   # Pushed to Apps Script as-is
     ├── appsscript.json    # Manifest: V8 runtime, time zone, web app settings
     ├── Config.js          # All tunable parameters and runtime overrides

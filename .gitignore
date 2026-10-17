@@ -15,3 +15,7 @@ Thumbs.db
 # Exported chat logs (private conversation data)
 akai-ito-log*.json
 data/
+
+# Experiments: real conversation data and results from it are never committed
+experiments/*/data/
+experiments/*/runs/real-*

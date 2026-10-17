@@ -104,6 +104,7 @@ akai-ito-bot/
 ├── scripts/deploy.mjs     # npm run deploy：一次推送並發布
 ├── jsconfig.json          # 編輯器的 Apps Script 型別提示
 ├── .clasp.json.example    # 連結 Apps Script 專案的設定範本
+├── experiments/           # 研究性實驗，與 bot 隔離（不會被推送）
 └── src/                   # 原封不動推送到 Apps Script
     ├── appsscript.json    # Manifest：V8 執行環境、時區、網頁應用程式設定
     ├── Config.js          # 所有可調參數與執行期覆寫

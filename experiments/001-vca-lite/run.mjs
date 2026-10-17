@@ -55,27 +55,33 @@ for (const scenario of scenarios) {
       const to = P.CONFIG.roles[turn.role].to;
       const { history, notes } = await condition.context({ sameDay, pastDays, P, scenario, day });
 
-      let translation, by, ms = 0, usage = null;
+      let translation, by, ms = 0, usage = null, error = null;
       const hit = P.Glossary.lookup(turn.text, from, to);
       if (hit) {
         translation = hit; by = 'glossary';
       } else {
         if (calls++ && !mock) await sleep(pace);
-        const out = await geminiTranslate(P, [{ text: turn.text, from, to }], history, notes, { mock, temperature: 0 });
-        translation = P.Glossary.postFix(turn.text, out.translations[0], from, to, 'gemini');
-        by = 'gemini'; ms = out.ms; usage = out.usage;
+        try {
+          const out = await geminiTranslate(P, [{ text: turn.text, from, to }], history, notes, { mock, temperature: 0 });
+          translation = P.Glossary.postFix(turn.text, out.translations[0], from, to, 'gemini');
+          by = 'gemini'; ms = out.ms; usage = out.usage;
+        } catch (e) {
+          // API 出錯時記錄下來繼續跑，不讓一題的錯誤吞掉整組結果
+          error = e.message; translation = ''; by = 'error';
+          reportError(error);
+        }
       }
       sameDay.push({ role: turn.role, text: turn.text, translation });
 
       const line = `  D${day.day} [${turn.role === 'owner' ? '我' : '她'}] ${turn.text} → ${translation}`;
       if (!turn.probe) { console.log(line); continue; }
 
-      const problems = check(turn.probe, translation);
+      const problems = error ? ['API 錯誤：' + error.slice(0, 120)] : check(turn.probe, translation);
       console.log((problems.length ? '❌' : '✅') + line.slice(1) + (problems.length ? '  ｜' + problems.join('；') : ''));
       results.push({
         rep, scenario: scenario.id, day: day.day, role: turn.role, text: turn.text,
         meaning: turn.probe.meaning, translation, by, pass: problems.length === 0, problems,
-        latency_ms: ms, prompt_tokens: usage?.promptTokenCount ?? null, history_turns: history.length,
+        latency_ms: ms, prompt_tokens: usage?.promptTokenCount ?? null, history_turns: history.length, error,
         notes_chars: notes ? notes.length : 0,
       });
     }
@@ -86,6 +92,7 @@ for (const scenario of scenarios) {
 }
 
 const passed = results.filter(r => r.pass).length;
+const errors = results.filter(r => r.error).length;
 const gemini = results.filter(r => r.by === 'gemini');
 // 每一題在多次重複中的通過次數，用來看穩定度
 const perProbe = {};
@@ -102,7 +109,7 @@ if (repeat > 1) {
 
 const summary = {
   condition: conditionName, model: P.CONFIG.gemini.model, repeat, mock,
-  probes: results.length, passed,
+  probes: results.length, passed, errors,
   pass_rate: results.length ? +(passed / results.length).toFixed(3) : null,
   avg_latency_ms: gemini.length ? Math.round(gemini.reduce((a, r) => a + r.latency_ms, 0) / gemini.length) : null,
   avg_prompt_tokens: gemini.length && gemini[0].prompt_tokens != null
@@ -147,5 +154,16 @@ function loadDotEnv(file) {
     if (!m || line.trim().startsWith('#')) continue;
     const value = m[2].replace(/^(['"])(.*)\1$/, '$2');
     if (process.env[m[1]] === undefined) process.env[m[1]] = value;
+  }
+}
+
+// 在 GitHub Actions 上輸出成 annotation（可以透過 API 讀到），同樣的訊息只報一次
+const reportedErrors = new Set();
+function reportError(msg) {
+  const short = msg.replace(/\s+/g, ' ').slice(0, 300);
+  console.error('API 錯誤：' + short);
+  if (process.env.GITHUB_ACTIONS && !reportedErrors.has(short)) {
+    reportedErrors.add(short);
+    console.log('::warning title=Gemini API::' + short);
   }
 }

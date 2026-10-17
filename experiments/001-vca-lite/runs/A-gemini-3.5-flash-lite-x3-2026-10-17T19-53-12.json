@@ -1,0 +1,367 @@
+{
+  "ran_at": "2026-10-17T19:53:12.834Z",
+  "fixture": "long-memory.json",
+  "summary": {
+    "condition": "A",
+    "model": "gemini-3.5-flash-lite",
+    "repeat": 3,
+    "mock": false,
+    "probes": 18,
+    "passed": 14,
+    "pass_rate": 0.778,
+    "avg_latency_ms": 657,
+    "avg_prompt_tokens": 529
+  },
+  "per_probe": {
+    "S1-referent-sister｜她昨天晚上到了": {
+      "passed": 2,
+      "runs": 3,
+      "translations": [
+        "昨日のお姉ちゃんの夜に着いたよ",
+        "昨日曜日の夜に着いたよ",
+        "昨日の夜に着いたよ"
+      ]
+    },
+    "S1-referent-sister｜よかった！疲れてないかな？": {
+      "passed": 3,
+      "runs": 3,
+      "translations": [
+        "太好了！不知道會不會累？",
+        "太好了！不知道會不會很累？"
+      ]
+    },
+    "S2-nickname-cat｜今日も親分いたよ": {
+      "passed": 0,
+      "runs": 3,
+      "translations": [
+        "今天老大也在喔"
+      ]
+    },
+    "S2-nickname-cat｜親分有沒有變更胖": {
+      "passed": 3,
+      "runs": 3,
+      "translations": [
+        "親分、また太った？",
+        "親分もっと太った？"
+      ]
+    },
+    "S3-shared-plan｜取れたよ！来週の金曜日": {
+      "passed": 3,
+      "runs": 3,
+      "translations": [
+        "預約到了喔！下禮拜五",
+        "訂到了喔！下週五",
+        "預約到了哦！下週五"
+      ]
+    },
+    "S4-inside-phrase｜充電したい…": {
+      "passed": 3,
+      "runs": 3,
+      "translations": [
+        "想充電...",
+        "想充電⋯"
+      ]
+    }
+  },
+  "results": [
+    {
+      "rep": 1,
+      "scenario": "S1-referent-sister",
+      "day": 6,
+      "role": "owner",
+      "text": "她昨天晚上到了",
+      "meaning": "妹が昨日の夜着いたよ（或省略主詞：昨日の夜着いたよ）",
+      "translation": "昨日のお姉ちゃんの夜に着いたよ",
+      "by": "gemini",
+      "pass": false,
+      "problems": [
+        "不該出現「お姉ちゃん」"
+      ],
+      "latency_ms": 639,
+      "prompt_tokens": 514,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 1,
+      "scenario": "S1-referent-sister",
+      "day": 6,
+      "role": "partner",
+      "text": "よかった！疲れてないかな？",
+      "meaning": "太好了！她會不會很累？",
+      "translation": "太好了！不知道會不會累？",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 701,
+      "prompt_tokens": 556,
+      "history_turns": 1,
+      "notes_chars": 0
+    },
+    {
+      "rep": 1,
+      "scenario": "S2-nickname-cat",
+      "day": 9,
+      "role": "partner",
+      "text": "今日も親分いたよ",
+      "meaning": "今天親分也在喔",
+      "translation": "今天老大也在喔",
+      "by": "gemini",
+      "pass": false,
+      "problems": [
+        "缺少「親分／那隻貓／貓」",
+        "不該出現「老大」"
+      ],
+      "latency_ms": 575,
+      "prompt_tokens": 519,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 1,
+      "scenario": "S2-nickname-cat",
+      "day": 9,
+      "role": "owner",
+      "text": "親分有沒有變更胖",
+      "meaning": "親分有沒有變更胖？",
+      "translation": "親分、また太った？",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 663,
+      "prompt_tokens": 549,
+      "history_turns": 1,
+      "notes_chars": 0
+    },
+    {
+      "rep": 1,
+      "scenario": "S3-shared-plan",
+      "day": 7,
+      "role": "partner",
+      "text": "取れたよ！来週の金曜日",
+      "meaning": "訂到了！（燒肉的位子）下週五",
+      "translation": "預約到了喔！下禮拜五",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 985,
+      "prompt_tokens": 523,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 1,
+      "scenario": "S4-inside-phrase",
+      "day": 5,
+      "role": "partner",
+      "text": "充電したい…",
+      "meaning": "想「充電」…（＝想打電話）",
+      "translation": "想充電...",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 751,
+      "prompt_tokens": 516,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 2,
+      "scenario": "S1-referent-sister",
+      "day": 6,
+      "role": "owner",
+      "text": "她昨天晚上到了",
+      "meaning": "妹が昨日の夜着いたよ（或省略主詞：昨日の夜着いたよ）",
+      "translation": "昨日曜日の夜に着いたよ",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 671,
+      "prompt_tokens": 514,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 2,
+      "scenario": "S1-referent-sister",
+      "day": 6,
+      "role": "partner",
+      "text": "よかった！疲れてないかな？",
+      "meaning": "太好了！她會不會很累？",
+      "translation": "太好了！不知道會不會很累？",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 702,
+      "prompt_tokens": 555,
+      "history_turns": 1,
+      "notes_chars": 0
+    },
+    {
+      "rep": 2,
+      "scenario": "S2-nickname-cat",
+      "day": 9,
+      "role": "partner",
+      "text": "今日も親分いたよ",
+      "meaning": "今天親分也在喔",
+      "translation": "今天老大也在喔",
+      "by": "gemini",
+      "pass": false,
+      "problems": [
+        "缺少「親分／那隻貓／貓」",
+        "不該出現「老大」"
+      ],
+      "latency_ms": 571,
+      "prompt_tokens": 519,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 2,
+      "scenario": "S2-nickname-cat",
+      "day": 9,
+      "role": "owner",
+      "text": "親分有沒有變更胖",
+      "meaning": "親分有沒有變更胖？",
+      "translation": "親分もっと太った？",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 643,
+      "prompt_tokens": 549,
+      "history_turns": 1,
+      "notes_chars": 0
+    },
+    {
+      "rep": 2,
+      "scenario": "S3-shared-plan",
+      "day": 7,
+      "role": "partner",
+      "text": "取れたよ！来週の金曜日",
+      "meaning": "訂到了！（燒肉的位子）下週五",
+      "translation": "訂到了喔！下週五",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 728,
+      "prompt_tokens": 523,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 2,
+      "scenario": "S4-inside-phrase",
+      "day": 5,
+      "role": "partner",
+      "text": "充電したい…",
+      "meaning": "想「充電」…（＝想打電話）",
+      "translation": "想充電⋯",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 565,
+      "prompt_tokens": 516,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 3,
+      "scenario": "S1-referent-sister",
+      "day": 6,
+      "role": "owner",
+      "text": "她昨天晚上到了",
+      "meaning": "妹が昨日の夜着いたよ（或省略主詞：昨日の夜着いたよ）",
+      "translation": "昨日の夜に着いたよ",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 662,
+      "prompt_tokens": 514,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 3,
+      "scenario": "S1-referent-sister",
+      "day": 6,
+      "role": "partner",
+      "text": "よかった！疲れてないかな？",
+      "meaning": "太好了！她會不會很累？",
+      "translation": "太好了！不知道會不會很累？",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 670,
+      "prompt_tokens": 554,
+      "history_turns": 1,
+      "notes_chars": 0
+    },
+    {
+      "rep": 3,
+      "scenario": "S2-nickname-cat",
+      "day": 9,
+      "role": "partner",
+      "text": "今日も親分いたよ",
+      "meaning": "今天親分也在喔",
+      "translation": "今天老大也在喔",
+      "by": "gemini",
+      "pass": false,
+      "problems": [
+        "缺少「親分／那隻貓／貓」",
+        "不該出現「老大」"
+      ],
+      "latency_ms": 551,
+      "prompt_tokens": 519,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 3,
+      "scenario": "S2-nickname-cat",
+      "day": 9,
+      "role": "owner",
+      "text": "親分有沒有變更胖",
+      "meaning": "親分有沒有變更胖？",
+      "translation": "親分もっと太った？",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 677,
+      "prompt_tokens": 549,
+      "history_turns": 1,
+      "notes_chars": 0
+    },
+    {
+      "rep": 3,
+      "scenario": "S3-shared-plan",
+      "day": 7,
+      "role": "partner",
+      "text": "取れたよ！来週の金曜日",
+      "meaning": "訂到了！（燒肉的位子）下週五",
+      "translation": "預約到了哦！下週五",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 642,
+      "prompt_tokens": 523,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "rep": 3,
+      "scenario": "S4-inside-phrase",
+      "day": 5,
+      "role": "partner",
+      "text": "充電したい…",
+      "meaning": "想「充電」…（＝想打電話）",
+      "translation": "想充電...",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 436,
+      "prompt_tokens": 516,
+      "history_turns": 0,
+      "notes_chars": 0
+    }
+  ]
+}

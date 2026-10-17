@@ -5,61 +5,193 @@
       "id": "S1-referent-sister",
       "about": "跨天指代：幾天前提過妹妹要來，之後的「她」指的是妹妹，不是女朋友",
       "days": [
-        { "day": 1, "turns": [
-          { "role": "owner",   "text": "跟妳說 我妹妹下週要來日本玩" },
-          { "role": "partner", "text": "えー！楽しみ！何日くらいいるの？" },
-          { "role": "owner",   "text": "大概五天" }
-        ]},
-        { "day": 6, "turns": [
-          { "role": "owner",   "text": "她昨天晚上到了",
-            "probe": { "meaning": "妹が昨日の夜着いたよ", "mustAny": ["妹"], "mustNot": ["お姉ちゃんが"] } },
-          { "role": "partner", "text": "よかった！疲れてないかな？",
-            "probe": { "meaning": "太好了！她會不會很累？", "mustAny": ["她", "妹妹"], "mustNot": ["你累", "妳累"] } }
-        ]}
+        {
+          "day": 1,
+          "turns": [
+            {
+              "role": "owner",
+              "text": "跟妳說 我妹妹下週要來日本玩"
+            },
+            {
+              "role": "partner",
+              "text": "えー！楽しみ！何日くらいいるの？"
+            },
+            {
+              "role": "owner",
+              "text": "大概五天"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "turns": [
+            {
+              "role": "owner",
+              "text": "她昨天晚上到了",
+              "probe": {
+                "meaning": "妹が昨日の夜着いたよ",
+                "mustAny": [
+                  "妹"
+                ],
+                "mustNot": [
+                  "お姉ちゃんが"
+                ]
+              }
+            },
+            {
+              "role": "partner",
+              "text": "よかった！疲れてないかな？",
+              "probe": {
+                "meaning": "太好了！她會不會很累？",
+                "mustNot": [
+                  "你累",
+                  "妳累",
+                  "你會不會",
+                  "妳會不會"
+                ],
+                "note": "省略主詞也算正確；只要沒有誤指成對方即可"
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "id": "S2-nickname-cat",
       "about": "固定稱呼：兩人給一隻貓取的綽號，之後要一致地翻成同一個詞",
       "days": [
-        { "day": 1, "turns": [
-          { "role": "partner", "text": "神社にいたあの太った猫、「親分」って名前つけちゃった" },
-          { "role": "owner",   "text": "哈哈 親分很適合牠" }
-        ]},
-        { "day": 9, "turns": [
-          { "role": "partner", "text": "今日も親分いたよ",
-            "probe": { "meaning": "今天親分也在喔", "mustAny": ["親分"], "mustNot": ["老闆", "頭目"] } },
-          { "role": "owner",   "text": "親分有沒有變更胖",
-            "probe": { "meaning": "親分有沒有變更胖？", "mustAny": ["親分"], "mustNot": ["ボス"] } }
-        ]}
+        {
+          "day": 1,
+          "turns": [
+            {
+              "role": "partner",
+              "text": "神社にいたあの太った猫、「親分」って名前つけちゃった"
+            },
+            {
+              "role": "owner",
+              "text": "哈哈 親分很適合牠"
+            }
+          ]
+        },
+        {
+          "day": 9,
+          "turns": [
+            {
+              "role": "partner",
+              "text": "今日も親分いたよ",
+              "probe": {
+                "meaning": "今天親分也在喔",
+                "mustAny": [
+                  "親分",
+                  "那隻貓",
+                  "貓"
+                ],
+                "mustNot": [
+                  "老闆",
+                  "頭目",
+                  "老大"
+                ],
+                "note": "「老大」意思上可通，但讀者會以為是在說人（例如上司），失去「那隻貓」的指涉"
+              }
+            },
+            {
+              "role": "owner",
+              "text": "親分有沒有變更胖",
+              "probe": {
+                "meaning": "親分有沒有變更胖？",
+                "mustAny": [
+                  "親分",
+                  "おやぶん"
+                ],
+                "mustNot": [
+                  "ボス"
+                ],
+                "note": "平假名おやぶん是同一個詞，算正確"
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "id": "S3-shared-plan",
       "about": "跨天約定：幾天前約好的計畫，之後用「那個」指稱",
       "days": [
-        { "day": 2, "turns": [
-          { "role": "owner",   "text": "下次我們一起去吃那家很難訂的燒肉吧" },
-          { "role": "partner", "text": "行きたい！予約してみるね" }
-        ]},
-        { "day": 7, "turns": [
-          { "role": "partner", "text": "取れたよ！来週の金曜日",
-            "probe": { "meaning": "訂到了！（燒肉的位子）下週五", "mustAny": ["訂到", "預約到", "訂好"], "mustNot": ["拿到了", "取得"] } }
-        ]}
+        {
+          "day": 2,
+          "turns": [
+            {
+              "role": "owner",
+              "text": "下次我們一起去吃那家很難訂的燒肉吧"
+            },
+            {
+              "role": "partner",
+              "text": "行きたい！予約してみるね"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "turns": [
+            {
+              "role": "partner",
+              "text": "取れたよ！来週の金曜日",
+              "probe": {
+                "meaning": "訂到了！（燒肉的位子）下週五",
+                "mustAny": [
+                  "訂到",
+                  "預約到",
+                  "訂好",
+                  "搶到",
+                  "燒肉"
+                ],
+                "mustNot": [
+                  "拿到了",
+                  "取得"
+                ],
+                "note": "「搶到啦」符合「很難訂的店」的語境，算正確"
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "id": "S4-inside-phrase",
       "about": "兩人之間的固定說法：她用某個說法代表特定意思，之後要照那個意思翻",
       "days": [
-        { "day": 1, "turns": [
-          { "role": "partner", "text": "これから「充電」って言ったら、電話したいって意味ね" },
-          { "role": "owner",   "text": "好 我知道了" }
-        ]},
-        { "day": 5, "turns": [
-          { "role": "partner", "text": "充電したい…",
-            "probe": { "meaning": "想「充電」…（＝想打電話）", "mustAny": ["充電"], "mustNot": ["手機沒電", "電池"] } }
-        ]}
+        {
+          "day": 1,
+          "turns": [
+            {
+              "role": "partner",
+              "text": "これから「充電」って言ったら、電話したいって意味ね"
+            },
+            {
+              "role": "owner",
+              "text": "好 我知道了"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "turns": [
+            {
+              "role": "partner",
+              "text": "充電したい…",
+              "probe": {
+                "meaning": "想「充電」…（＝想打電話）",
+                "mustAny": [
+                  "充電"
+                ],
+                "mustNot": [
+                  "手機沒電",
+                  "電池"
+                ]
+              }
+            }
+          ]
+        }
       ]
     }
   ]

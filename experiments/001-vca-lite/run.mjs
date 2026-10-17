@@ -102,6 +102,7 @@ if (!mock) {
 function check(probe, t) {
   const problems = [];
   if (probe.mustAny && !probe.mustAny.some(w => t.includes(w))) problems.push('缺少「' + probe.mustAny.join('／') + '」');
+  (probe.mustAll || []).forEach(w => { if (!t.includes(w)) problems.push('缺少「' + w + '」'); });
   (probe.mustNot || []).forEach(w => { if (t.includes(w)) problems.push('不該出現「' + w + '」'); });
   return problems;
 }

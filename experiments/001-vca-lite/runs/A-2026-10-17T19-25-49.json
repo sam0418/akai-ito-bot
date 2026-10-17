@@ -1,0 +1,109 @@
+{
+  "ran_at": "2026-10-17T19:25:49.434Z",
+  "fixture": "long-memory.json",
+  "summary": {
+    "condition": "A",
+    "model": "gemini-3.5-flash-lite",
+    "mock": false,
+    "probes": 6,
+    "passed": 5,
+    "pass_rate": 0.833,
+    "avg_latency_ms": 981,
+    "avg_prompt_tokens": 508
+  },
+  "results": [
+    {
+      "scenario": "S1-referent-sister",
+      "day": 6,
+      "role": "owner",
+      "text": "她昨天晚上到了",
+      "meaning": "妹が昨日の夜着いたよ（或省略主詞：昨日の夜着いたよ）",
+      "translation": "昨日いた",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 848,
+      "prompt_tokens": 493,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "scenario": "S1-referent-sister",
+      "day": 6,
+      "role": "partner",
+      "text": "よかった！疲れてないかな？",
+      "meaning": "太好了！她會不會很累？",
+      "translation": "太好了！不知道會不會很累？",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 858,
+      "prompt_tokens": 529,
+      "history_turns": 1,
+      "notes_chars": 0
+    },
+    {
+      "scenario": "S2-nickname-cat",
+      "day": 9,
+      "role": "partner",
+      "text": "今日も親分いたよ",
+      "meaning": "今天親分也在喔",
+      "translation": "今天老大也在喔",
+      "by": "gemini",
+      "pass": false,
+      "problems": [
+        "缺少「親分／那隻貓／貓」",
+        "不該出現「老大」"
+      ],
+      "latency_ms": 1289,
+      "prompt_tokens": 498,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "scenario": "S2-nickname-cat",
+      "day": 9,
+      "role": "owner",
+      "text": "親分有沒有變更胖",
+      "meaning": "親分有沒有變更胖？",
+      "translation": "親分、また太った？",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 778,
+      "prompt_tokens": 528,
+      "history_turns": 1,
+      "notes_chars": 0
+    },
+    {
+      "scenario": "S3-shared-plan",
+      "day": 7,
+      "role": "partner",
+      "text": "取れたよ！来週の金曜日",
+      "meaning": "訂到了！（燒肉的位子）下週五",
+      "translation": "預約到囉！下週五",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 1029,
+      "prompt_tokens": 502,
+      "history_turns": 0,
+      "notes_chars": 0
+    },
+    {
+      "scenario": "S4-inside-phrase",
+      "day": 5,
+      "role": "partner",
+      "text": "充電したい…",
+      "meaning": "想「充電」…（＝想打電話）",
+      "translation": "想充電...",
+      "by": "gemini",
+      "pass": true,
+      "problems": [],
+      "latency_ms": 1085,
+      "prompt_tokens": 495,
+      "history_turns": 0,
+      "notes_chars": 0
+    }
+  ]
+}

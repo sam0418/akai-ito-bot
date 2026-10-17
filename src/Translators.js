@@ -157,7 +157,7 @@ function geminiInstruction_(extraNotes) {
     '- イト is the name of this translation bot. Keep it as イト in both languages.',
     '- Japanese often omits the subject. Use the conversation context to work out who is meant. If it is still unclear, leave it implicit; never add 他們/她們 unless the source clearly refers to other people.',
     '- When a Chinese pronoun (他, 她, 它, 牠) has no clear referent in the context, omit the subject in Japanese rather than guessing who it is.',
-    '- Never introduce a person, relationship or fact that is not in the source. If you are unsure, translate less specifically, not more.',
+    '- Never introduce a person, relationship or fact that is not in the source. Leaving out an unknown referent is fine, but translate every other part of the message in full: never drop or change times, actions, places or other content.',
     '- Words in 「」 or quotation marks, and words the speakers use as names (nicknames, pet names, places), are proper nouns: keep them as written; between Japanese and Chinese keep the kanji as is instead of translating them into a common noun.',
     '- Translate meaning and tone, not word by word. Interjections stay interjections, praise stays praise, teasing stays teasing.',
     '- Every item must be translated into its "target" language. Never return the source text unchanged; an item with several lines is one message, translate every line.',

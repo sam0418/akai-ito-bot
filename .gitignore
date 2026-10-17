@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
 
+# Secrets (API keys) — never commit
+.env
+.env.*
+!.env.example
+
 # clasp: project binding and credentials (machine-specific)
 .clasp.json
 .clasprc.json

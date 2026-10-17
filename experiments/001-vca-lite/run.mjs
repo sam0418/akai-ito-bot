@@ -9,7 +9,7 @@
  * 結果印在終端機，並存到 runs/<條件>-<時間>.json。
  * 記憶は量より、つながり。
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadProduction } from './lib/production.mjs';
@@ -18,6 +18,9 @@ import { CONDITIONS } from './lib/conditions.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
+
+// 讀取專案根目錄的 .env（不進 git）。已經設定的環境變數優先。
+loadDotEnv(path.join(root, '.env'));
 
 const args = parseArgs(process.argv.slice(2));
 const conditionName = (args.condition || 'A').toUpperCase();
@@ -116,3 +119,13 @@ function parseArgs(argv) {
 }
 
 function die(msg) { console.error(msg); process.exit(1); }
+
+function loadDotEnv(file) {
+  if (!existsSync(file)) return;
+  for (const line of readFileSync(file, 'utf8').replace(/^\uFEFF/, '').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (!m || line.trim().startsWith('#')) continue;
+    const value = m[2].replace(/^(['"])(.*)\1$/, '$2');
+    if (process.env[m[1]] === undefined) process.env[m[1]] = value;
+  }
+}

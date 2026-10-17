@@ -1,0 +1,1 @@
+{ "experiment": "001-vca-lite", "condition": "A", "model": "gemini-3.6-flash", "repeat": 3, "pace": 7000 }

@@ -1,0 +1,69 @@
+# 在 GitHub Actions 上執行 experiments/ 裡的實驗（手動觸發）。
+# 只使用 repo 內的虛構 fixtures；真實對話資料（data/）不在 repo 裡，這裡也碰不到。
+# 金鑰來自 repo secret GEMINI_API_KEY，不會出現在程式碼或紀錄裡。
+name: experiment
+
+on:
+  workflow_dispatch:
+    inputs:
+      experiment:
+        description: 實驗資料夾（experiments/ 底下）
+        default: 001-vca-lite
+      condition:
+        description: 實驗條件（A / B / C）
+        default: A
+      model:
+        description: 模型（留空則用 src/Config.js 的設定）
+        default: ''
+      repeat:
+        description: 重複次數
+        default: '1'
+      pace:
+        description: 每次請求的間隔（毫秒）
+        default: '4500'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: experiment          # 同時只跑一個，避免撞到 Gemini 免費方案的每分鐘上限
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run experiment
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          EXPERIMENT: ${{ inputs.experiment }}
+          CONDITION: ${{ inputs.condition }}
+          MODEL: ${{ inputs.model }}
+          REPEAT: ${{ inputs.repeat }}
+          PACE: ${{ inputs.pace }}
+        run: |
+          # 輸入一律先驗證，避免任意字串進到指令裡
+          [[ "$EXPERIMENT" =~ ^[0-9]{3}-[a-z0-9-]+$ ]] || { echo "invalid experiment"; exit 1; }
+          [[ "$CONDITION" =~ ^[A-Za-z]$ ]]             || { echo "invalid condition"; exit 1; }
+          [[ -z "$MODEL" || "$MODEL" =~ ^[a-z0-9.-]+$ ]] || { echo "invalid model"; exit 1; }
+          [[ "$REPEAT" =~ ^[0-9]+$ && "$PACE" =~ ^[0-9]+$ ]] || { echo "invalid number"; exit 1; }
+          [[ -n "$GEMINI_API_KEY" ]] || { echo "請先在 repo 設定 secret GEMINI_API_KEY"; exit 1; }
+          args=(--condition "$CONDITION" --repeat "$REPEAT" --pace "$PACE")
+          [[ -n "$MODEL" ]] && args+=(--model "$MODEL")
+          node "experiments/$EXPERIMENT/run.mjs" "${args[@]}"
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runs-${{ inputs.experiment }}-${{ github.run_id }}
+          path: experiments/${{ inputs.experiment }}/runs/
+          if-no-files-found: warn
+          retention-days: 90

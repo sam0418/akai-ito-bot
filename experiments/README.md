@@ -15,6 +15,18 @@
 4. **結果**：每次執行的數字與觀察
 5. **結論**：採納、修改或放棄
 
+## 在 GitHub Actions 上執行
+
+`.github/workflows/experiment.yml` 可以在 GitHub 的伺服器上跑實驗（手動觸發）。
+需要先在 repo 的 **Settings → Secrets and variables → Actions** 新增 secret `GEMINI_API_KEY`。
+
+```bash
+gh workflow run experiment.yml -f experiment=001-vca-lite -f condition=A -f repeat=3
+gh run download <run-id>        # 下載 runs/ 結果
+```
+
+只會用到 repo 內的虛構 fixtures；真實對話資料不在 repo 裡，Actions 也讀不到。
+
 ## 資料規則
 
 - `fixtures/`：虛構的測試資料，可以提交。

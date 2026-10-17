@@ -46,11 +46,22 @@ VCA（Vector-based Cognitive Architecture）的主張是：不靠換更大的模
 
 ### 執行
 
-```bash
-# PowerShell：$env:GEMINI_API_KEY = "..."
+在 `akai-ito-bot` 資料夾執行（需要 Node 20 以上）：
+
+```powershell
+$env:GEMINI_API_KEY = "你的金鑰"          # 只在這個終端機視窗有效，不會存檔
 node experiments/001-vca-lite/run.mjs --condition A
-node experiments/001-vca-lite/run.mjs --condition B
 ```
+
+| 參數 | 說明 |
+|---|---|
+| `--condition A\|B\|C` | 實驗條件 |
+| `--scenario <id>` | 只跑單一情境 |
+| `--pace <毫秒>` | 每次請求的間隔，預設 4500（免費方案有每分鐘上限） |
+| `--mock` | 不呼叫 API，只檢查流程 |
+
+翻譯指示、詞彙表與模型設定直接從 `src/` 載入，所以實驗和線上版本完全一致；評估時 `temperature` 固定為 0。
+結果存到 `runs/<條件>-<時間>.json`。
 
 ### 移植自 VCA 的設計
 

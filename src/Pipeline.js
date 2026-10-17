@@ -21,23 +21,7 @@ const Pipeline = {
       from: CONFIG.roles[s.role].from,
       to: CONFIG.roles[s.role].to,
     }));
-    // 詞彙表命中的段落直接查表，其餘才送翻譯引擎，翻完再套用詞彙表修正
-    const results = reqs.map(r => {
-      const hit = Glossary.lookup(r.text, r.from, r.to);
-      return hit ? { ok: true, text: hit, by: 'glossary' } : null;
-    });
-    const pending = [];
-    results.forEach((r, i) => { if (!r) pending.push(i); });
-
-    const startedAt = Date.now();
-    const translated = pending.length ? Translator.translateAll(pending.map(i => reqs[i]), { context: ctx }) : [];
-    const translateMs = Date.now() - startedAt;
-    pending.forEach((idx, k) => {
-      const t = translated[k];
-      results[idx] = t.ok
-        ? { ok: true, text: Glossary.postFix(reqs[idx].text, t.text, reqs[idx].from, reqs[idx].to), by: t.by }
-        : t;
-    });
+    const { results, translateMs } = translateRequests_(reqs, ctx);
     segments.forEach((s, i) => {
       s.ok = results[i].ok;
       s.translation = results[i].ok ? results[i].text : null;
@@ -50,6 +34,30 @@ const Pipeline = {
     return { messages: Formatter.build(segments), segments, translateMs };
   },
 };
+
+/**
+ * 翻譯一組請求：詞彙表命中的直接查表，其餘送翻譯引擎，翻完再套用詞彙表修正。
+ * 正式流程與測試（DialogueTest.js）共用這一段，確保測的就是線上的行為。
+ */
+function translateRequests_(reqs, ctx) {
+  const results = reqs.map(r => {
+    const hit = Glossary.lookup(r.text, r.from, r.to);
+    return hit ? { ok: true, text: hit, by: 'glossary' } : null;
+  });
+  const pending = [];
+  results.forEach((r, i) => { if (!r) pending.push(i); });
+
+  const startedAt = Date.now();
+  const translated = pending.length ? Translator.translateAll(pending.map(i => reqs[i]), { context: ctx }) : [];
+  const translateMs = Date.now() - startedAt;
+  pending.forEach((idx, k) => {
+    const t = translated[k];
+    results[idx] = t.ok
+      ? { ok: true, text: Glossary.postFix(reqs[idx].text, t.text, reqs[idx].from, reqs[idx].to, t.by), by: t.by }
+      : t;
+  });
+  return { results, translateMs };
+}
 
 /** 連續同一個人說的話合成一段，保留順序。 */
 // 同じ人が続けて話したら、ひとつの糸にまとめる。

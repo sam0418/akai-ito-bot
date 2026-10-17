@@ -111,6 +111,7 @@ akai-ito-bot/
     ├── Buffer.js          # Message buffer and conversation context (Cache + Lock)
     ├── Translators.js     # Translator interface, implementations, fallback chain
     ├── Glossary.js        # Phrase table and post-translation fixes
+    ├── DialogueTest.js    # Scripted dialogue test for the whole pipeline
     ├── Pipeline.js        # Segment → hooks → translate → hooks → format
     ├── Commands.js        # Group commands
     ├── ChatLog.js         # Conversation log (JSON file in Drive)
@@ -197,7 +198,10 @@ copy .clasp.json.example .clasp.json      # Windows
 | `roles.partner` | `ja → zh-TW` | Translation direction and label for the partner |
 | `timing.quietMs` | `3000` | Silence after the last message before flushing (ms) |
 | `timing.maxWaitMs` | `8000` | Maximum time a batch can wait (ms) |
-| `translator.chain` | `['languageApp']` | Translator order (`googleGtx` is unreachable from Apps Script) |
+| `translator.chain` | `['gemini', 'languageApp']` | Translator order; falls back to `languageApp` when Gemini fails |
+| `gemini.model` | `'gemini-3.5-flash-lite'` | Gemini model (`gemini-3.6-flash` is more accurate but slower) |
+| `gemini.temperature` | `0.3` | Sampling temperature |
+| `gemini.contextTurns` | `10` | Recent segments sent as context |
 | `glossary.enabled` | `true` | Enable the phrase table and post-translation fixes |
 | `glossary.partnerAddress` | `'お姉ちゃん'` | How the owner addresses the partner in Japanese; used for 姐姐／姊姊／你／妳 |
 | `filter.skipPrefixes` | `['!', '！']` | Messages starting with these are not translated |
@@ -216,6 +220,8 @@ copy .clasp.json.example .clasp.json      # Windows
 | Key | Required | Description |
 |---|---|---|
 | `CHANNEL_ACCESS_TOKEN` | ✅ | LINE channel access token |
+| `GEMINI_API_KEY` | — | Gemini API key from Google AI Studio |
+| `PROFILE_NOTES` | — | Extra notes about the couple added to the Gemini instructions (kept out of the repo) |
 | `LLM_ENDPOINT` | — | URL of a self-hosted LLM translation service |
 | `OWNER_USER_ID` / `BOUND_CHAT_ID` | Auto | Written by `/我是` |
 | `PAUSED` | Auto | Written by `/暫停` and `/恢復` |
@@ -251,6 +257,16 @@ TRANSLATORS.myTranslator = {
   translateBatch(reqs, opts) { /* ... */ },
 };
 ```
+
+### Gemini
+
+The `gemini` translator sends each batch together with the most recent conversation and a description of the relationship (forms of address, casual Japanese, the bot's name, how to handle omitted subjects), and asks for structured JSON output. This lets it resolve who is being talked about and keep the tone casual, which Google Translate cannot do.
+
+1. Create an API key in [Google AI Studio](https://aistudio.google.com/).
+2. Add it as the Script Property `GEMINI_API_KEY`.
+3. Optionally add private notes about the couple as `PROFILE_NOTES`.
+
+Glossary rules still run after Gemini; rules marked `engines: ['languageApp']` are skipped for it.
 
 ### Connecting a self-hosted LLM
 
@@ -356,13 +372,15 @@ Send `/紀錄` in chat to get a link to the current file.
 
 - **Conversations are stored permanently** as JSON files in the owner's Google Drive (see [Conversation Log](#conversation-log)). Set `log.enabled` to `false` to turn this off.
 - The message buffer (up to 10 minutes) and translation context (up to 6 hours) live only in `CacheService`.
-- Messages pass through the LINE platform and the configured translation service (currently Google Translate).
+- Messages pass through the LINE platform and the configured translation services (Gemini, with Google Translate as fallback).
+- **On the Gemini API free tier, Google may use submitted content to improve its products.** Use a paid tier or the self-hosted LLM if that is not acceptable.
 - Every group member must know about and agree to both the bot and the logging before it is deployed.
 - Downloaded log files are excluded from git via `.gitignore`; never commit conversation data to the repository.
 
 ## Roadmap
 
 - [x] Manage deployments with `clasp`
+- [x] Context-aware translation with Gemini
 - [ ] Connect a self-hosted LLM on a Mac mini (via Cloudflare Tunnel)
 - [ ] Use conversation context for consistent tone and forms of address
 - [ ] Latency optimization (adaptive debounce, streamed replies)

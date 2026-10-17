@@ -55,9 +55,10 @@ const GLOSSARY = {
       replace: [[/あなた|貴方|君(?!たち)/g, '{partner}']] },
     // bot 名字不要被當成姓氏
     { dir: 'ja>zh-TW', ifSource: /イト/,
-      replace: [[/伊藤先生|伊藤|伊托/g, 'イト']] },
+      replace: [[/伊藤先生|伊藤|伊托|絲線|線/g, 'イト']] },
     // 日文省略主詞時，引擎常亂補「他們」。原文沒有第三人稱線索就拿掉，讓讀者照上下文理解
-    { dir: 'ja>zh-TW', unlessSource: /彼|あの人|あいつ|みんな|皆|人たち|たち|友達|家族/,
+    // （只套用在 languageApp；Gemini 會看上下文判斷，不該被這條規則誤刪）
+    { dir: 'ja>zh-TW', engines: ['languageApp'], unlessSource: /彼|あの人|あいつ|みんな|皆|人たち|たち|友達|家族/,
       replace: [[/他們|她們/g, '']] },
   ],
 };
@@ -79,13 +80,14 @@ const Glossary = {
   },
 
   /** 翻譯後修正。 */
-  postFix(source, translation, from, to) {
+  postFix(source, translation, from, to, engine) {
     let text = translation.replace(/\n{2,}/g, '\n');   // 引擎有時會多插一個空行
     if (!CONFIG.glossary.enabled) return text;
     const dir = from + '>' + to;
     const partner = CONFIG.glossary.partnerAddress;
     GLOSSARY.rules.forEach(rule => {
       if (rule.dir !== dir) return;
+      if (rule.engines && !rule.engines.includes(engine)) return;
       if (rule.ifSource && !rule.ifSource.test(source)) return;
       if (rule.unlessSource && rule.unlessSource.test(source)) return;
       rule.replace.forEach(([re, rep]) => { text = text.replace(re, rep.replace('{partner}', partner)); });

@@ -111,6 +111,7 @@ akai-ito-bot/
     ├── Buffer.js          # 訊息暫存區與對話上下文（Cache + Lock）
     ├── Translators.js     # 翻譯器介面與實作、備援鏈
     ├── Glossary.js        # 短句表與翻譯後修正
+    ├── DialogueTest.js    # 用固定對話劇本測試整條管線
     ├── Pipeline.js        # 分段 → hooks → 翻譯 → hooks → 排版
     ├── Commands.js        # 群組指令
     ├── ChatLog.js         # 對話紀錄（Drive 上的 JSON 檔）
@@ -197,7 +198,10 @@ copy .clasp.json.example .clasp.json      # Windows
 | `roles.partner` | `ja → zh-TW` | partner 的翻譯方向與標示 |
 | `timing.quietMs` | `3000` | 最後一則訊息之後的靜默時間（毫秒） |
 | `timing.maxWaitMs` | `8000` | 單一批次的最長等待時間（毫秒） |
-| `translator.chain` | `['languageApp']` | 翻譯器的嘗試順序（從 Apps Script 連不到 `googleGtx`） |
+| `translator.chain` | `['gemini', 'languageApp']` | 翻譯器的嘗試順序；Gemini 失敗時退回 `languageApp` |
+| `gemini.model` | `'gemini-3.5-flash-lite'` | Gemini 模型（`gemini-3.6-flash` 較準但較慢） |
+| `gemini.temperature` | `0.3` | 取樣溫度 |
+| `gemini.contextTurns` | `10` | 帶給模型的最近對話段數 |
 | `glossary.enabled` | `true` | 啟用短句表與翻譯後修正 |
 | `glossary.partnerAddress` | `'お姉ちゃん'` | owner 用日文怎麼稱呼 partner，姐姐／姊姊／你／妳 都會翻成這個 |
 | `filter.skipPrefixes` | `['!', '！']` | 以這些字元開頭的訊息不翻譯 |
@@ -216,6 +220,8 @@ copy .clasp.json.example .clasp.json      # Windows
 | 鍵 | 必要 | 說明 |
 |---|---|---|
 | `CHANNEL_ACCESS_TOKEN` | ✅ | LINE channel access token |
+| `GEMINI_API_KEY` | — | Google AI Studio 發行的 Gemini API 金鑰 |
+| `PROFILE_NOTES` | — | 額外的關係設定，會加進 Gemini 的指示（不會進 repo） |
 | `LLM_ENDPOINT` | — | 自架 LLM 翻譯服務的網址 |
 | `OWNER_USER_ID` / `BOUND_CHAT_ID` | 自動 | 由 `/我是` 寫入 |
 | `PAUSED` | 自動 | 由 `/暫停`、`/恢復` 寫入 |
@@ -251,6 +257,16 @@ TRANSLATORS.myTranslator = {
   translateBatch(reqs, opts) { /* ... */ },
 };
 ```
+
+### Gemini
+
+`gemini` 翻譯器會把每一批訊息，連同最近的對話和兩人的關係設定（稱呼、用口語日文、bot 的名字、主詞省略時怎麼處理）一起送出，並要求回傳結構化 JSON。這讓它能判斷「在說誰」並維持口語語氣，這是 Google 翻譯做不到的。
+
+1. 到 [Google AI Studio](https://aistudio.google.com/) 建立 API 金鑰。
+2. 在指令碼屬性新增 `GEMINI_API_KEY`。
+3. 需要的話，把關於兩人的私人設定寫在 `PROFILE_NOTES`。
+
+詞彙表規則在 Gemini 之後仍會執行；標記為 `engines: ['languageApp']` 的規則不會套用在 Gemini。
 
 ### 接上自架 LLM
 
@@ -356,13 +372,15 @@ HOOKS.afterTranslate.push((segments, ctx) => segments.map(s => ({ ...s /* ... */
 
 - **對話會以 JSON 檔永久保存**在 owner 的 Google Drive（見[對話紀錄](#對話紀錄)）。把 `log.enabled` 設為 `false` 即可關閉。
 - 訊息暫存區（最多 10 分鐘）與翻譯上下文（最多 6 小時）只存在 `CacheService`。
-- 訊息會經過 LINE 平台與所設定的翻譯服務（目前為 Google 翻譯）。
+- 訊息會經過 LINE 平台與所設定的翻譯服務（Gemini，備援為 Google 翻譯）。
+- **使用 Gemini API 免費方案時，Google 可能會用送出的內容來改進其產品。** 如果不能接受，請改用付費方案或自架 LLM。
 - 部署前，請確認群組內所有成員都知情，並同意使用 bot 與對話紀錄。
 - 下載到本機的紀錄檔已列入 `.gitignore`，請勿把對話資料提交到 repository。
 
 ## Roadmap
 
 - [x] 以 `clasp` 管理部署
+- [x] 使用 Gemini 進行理解上下文的翻譯
 - [ ] 接上 Mac mini 自架 LLM（Cloudflare Tunnel）
 - [ ] 運用上下文進行語氣與稱謂一致化
 - [ ] 延遲最佳化（動態 debounce、串流回覆）

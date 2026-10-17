@@ -21,8 +21,18 @@ const CONFIG = {
   // 翻譯器依序嘗試：前一個失敗的段落才交給下一個。
   // 之後接 Mac mini：把 'macMiniLlm' 放到最前面即可。
   translator: {
-    // googleGtx 從 Apps Script 呼叫時一律失敗（實測 35/35 都改由 languageApp 完成），先移出翻譯鏈
-    chain: ['languageApp'],
+    // gemini 失敗（沒設金鑰、額度用完、逾時）時自動退回 languageApp。
+    // googleGtx 從 Apps Script 呼叫時一律失敗，不放進翻譯鏈。
+    chain: ['gemini', 'languageApp'],
+  },
+
+  // Gemini 翻譯器（Translators.js）。金鑰放在指令碼屬性 GEMINI_API_KEY。
+  // 額外的關係設定可以寫在指令碼屬性 PROFILE_NOTES（不會進 repo）。
+  gemini: {
+    model: 'gemini-3.5-flash-lite',   // 較快；想要更準可改成 gemini-3.6-flash
+    temperature: 0.3,
+    contextTurns: 10,                 // 帶給模型的最近對話段數
+    testPacingMs: 4500,               // 對話測試時每次請求的間隔（免費方案有每分鐘上限）
   },
 
   // 詞彙表（Glossary.js）：常用短句直接查表、翻譯後修正固定錯誤

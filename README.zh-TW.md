@@ -101,6 +101,7 @@ akai-ito-bot/
 ├── README.md
 ├── README.zh-TW.md
 ├── package.json           # clasp 指令與開發相依套件
+├── scripts/deploy.mjs     # npm run deploy：一次推送並發布
 ├── jsconfig.json          # 編輯器的 Apps Script 型別提示
 ├── .clasp.json.example    # 連結 Apps Script 專案的設定範本
 └── src/                   # 原封不動推送到 Apps Script
@@ -149,12 +150,15 @@ copy .clasp.json.example .clasp.json      # Windows
 
 | 指令 | 說明 |
 |---|---|
+| `npm run deploy [-- "說明"]` | 一次完成推送與發布新版本到既有部署（網址不變） |
 | `npm run push` | 把 `src/` 推送到 Apps Script（包含 manifest） |
 | `npm run watch` | 檔案一變動就自動推送 |
 | `npm run status` | 列出會被推送的檔案 |
 | `npm run open` | 在 Apps Script 編輯器中開啟專案 |
 | `npm run deployments` | 列出部署 ID |
 | `npm run redeploy -- <deploymentId>` | 把新版本發布到既有部署，網址不變 |
+
+`npm run deploy` 會從 `.deploy.json`（不進 git，可從 `.deploy.json.example` 複製）或環境變數 `AKAI_DEPLOYMENT_ID` 讀取部署 ID。
 
 > `clasp push` 會**整個取代遠端專案**。請以 `src/` 為唯一來源，避免在網頁編輯器裡改程式碼。
 
@@ -181,7 +185,8 @@ copy .clasp.json.example .clasp.json      # Windows
    - 執行身分：**我**
    - 存取權：**所有人**
 2. 把網頁應用程式的網址貼到 LINE Developers Console 的 Webhook URL。
-3. 之後更新時，先 `npm run push`，再 `npm run redeploy -- <deploymentId>`。
+3. 把部署 ID 存進 `.deploy.json`。之後更新只要執行 `npm run deploy`。
+4. 只有在程式開始使用新的 Google 服務（例如 Drive）時，才需要重新執行 `authorize`；在編輯器執行任一函式時，如果有新權限需要授予就會跳出提示。
 
 ### 4. 綁定
 

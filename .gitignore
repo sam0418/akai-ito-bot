@@ -4,6 +4,7 @@ node_modules/
 # clasp: project binding and credentials (machine-specific)
 .clasp.json
 .clasprc.json
+.deploy.json
 
 # OS / editor
 .DS_Store

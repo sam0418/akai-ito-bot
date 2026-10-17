@@ -101,6 +101,7 @@ akai-ito-bot/
 ├── README.md
 ├── README.zh-TW.md
 ├── package.json           # clasp scripts and dev dependencies
+├── scripts/deploy.mjs     # npm run deploy: push + publish in one step
 ├── jsconfig.json          # Editor type hints for Apps Script globals
 ├── .clasp.json.example    # Template for linking to an Apps Script project
 └── src/                   # Pushed to Apps Script as-is
@@ -149,12 +150,15 @@ copy .clasp.json.example .clasp.json      # Windows
 
 | Command | Description |
 |---|---|
+| `npm run deploy [-- "note"]` | Push and publish a new version to the existing deployment in one step (URL unchanged) |
 | `npm run push` | Push `src/` to Apps Script (including the manifest) |
 | `npm run watch` | Push automatically on every file change |
 | `npm run status` | List the files that will be pushed |
 | `npm run open` | Open the project in the Apps Script editor |
 | `npm run deployments` | List deployment IDs |
 | `npm run redeploy -- <deploymentId>` | Publish a new version to an existing deployment, keeping its URL |
+
+`npm run deploy` reads the deployment ID from `.deploy.json` (git-ignored; copy `.deploy.json.example`) or the `AKAI_DEPLOYMENT_ID` environment variable.
 
 > `clasp push` **replaces the entire remote project**. Treat `src/` as the source of truth and avoid editing code in the web editor.
 
@@ -181,7 +185,8 @@ copy .clasp.json.example .clasp.json      # Windows
    - Execute as: **Me**
    - Who has access: **Anyone**
 2. Paste the web app URL into the Webhook URL field in the LINE Developers Console.
-3. For later updates, run `npm run push` and then `npm run redeploy -- <deploymentId>`.
+3. Save the deployment ID in `.deploy.json`. For later updates, run `npm run deploy`.
+4. Run `authorize` again only when a change starts using a new Google service (for example Drive); running any function in the editor will prompt if new permissions are needed.
 
 ### 4. Bind
 

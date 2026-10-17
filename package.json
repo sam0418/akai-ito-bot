@@ -7,6 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "deploy": "node scripts/deploy.mjs",
     "push": "clasp push -f",
     "watch": "clasp push -f --watch",
     "pull": "clasp pull",

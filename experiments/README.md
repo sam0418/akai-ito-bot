@@ -29,7 +29,7 @@
   { "experiment": "001-vca-lite", "condition": "A", "model": "gemini-3.6-flash", "repeat": 3, "pace": 7000 }
   ```
 
-結果會存成 workflow 的 artifact（`runs-<實驗>-<run id>`），保留 90 天。
+結果會存成 workflow 的 artifact（`runs-<實驗>-<run id>`），保留 90 天；用推送分支觸發時，結果也會 commit 回同一個分支。
 
 只會用到 repo 內的虛構 fixtures；真實對話資料不在 repo 裡，Actions 也讀不到。
 

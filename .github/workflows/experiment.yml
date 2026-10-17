@@ -1,7 +1,8 @@
 # 在 GitHub Actions 上執行 experiments/ 裡的實驗。
 # 觸發方式：
 #   1. 手動觸發（Actions 頁面 → experiment → Run workflow）
-#   2. 推送 exp-run/** 分支：參數放在 experiments/run-request.json
+#   2. 推送 exp-run/** 分支：參數放在 experiments/run-request.json，
+#      跑完後結果會 commit 回同一個分支（GITHUB_TOKEN 的推送不會再觸發 workflow）
 # 只使用 repo 內的虛構 fixtures；真實對話資料（data/）不在 repo 裡，這裡也碰不到。
 # 金鑰來自 repo secret GEMINI_API_KEY，不會出現在程式碼或紀錄裡。
 name: experiment
@@ -28,7 +29,7 @@ on:
         default: '4500'
 
 permissions:
-  contents: read
+  contents: write     # 推送分支觸發時，把結果 commit 回同一個分支
 
 concurrency:
   group: experiment          # 同時只跑一個，避免撞到 Gemini 免費方案的每分鐘上限
@@ -98,3 +99,16 @@ jobs:
           path: experiments/${{ steps.params.outputs.experiment }}/runs/
           if-no-files-found: warn
           retention-days: 90
+
+      - name: Commit results to the run branch
+        if: always() && github.event_name == 'push'
+        env:
+          EXPERIMENT: ${{ steps.params.outputs.experiment }}
+        run: |
+          [[ -d "experiments/$EXPERIMENT/runs" ]] || exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add "experiments/$EXPERIMENT/runs/"
+          if git diff --cached --quiet; then echo "no results"; exit 0; fi
+          git commit -m "Results for $GITHUB_REF_NAME [skip ci]"
+          git push origin "HEAD:$GITHUB_REF_NAME"

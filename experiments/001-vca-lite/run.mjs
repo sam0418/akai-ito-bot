@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadProduction } from './lib/production.mjs';
-import { geminiTranslate, sleep } from './lib/gemini.mjs';
+import { geminiTranslate, sleep, QuotaError } from './lib/gemini.mjs';
 import { CONDITIONS } from './lib/conditions.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -43,14 +43,20 @@ console.log(`條件 ${conditionName}：${condition.describe}｜模型 ${P.CONFIG
 
 const results = [];
 let calls = 0;
+let stopped = null;          // 額度用完時提早停止的原因
+const startedAt = new Date();
+const stamp = startedAt.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+const outFile = path.join(here, 'runs', `${conditionName}-${P.CONFIG.gemini.model}-x${repeat}-${stamp}.json`);
 for (let rep = 1; rep <= repeat; rep++) {
 if (repeat > 1) console.log(`===== 第 ${rep} / ${repeat} 次 =====`);
 for (const scenario of scenarios) {
+  if (stopped) break;
   console.log('■ ' + scenario.id + '：' + scenario.about);
   const pastDays = [];                                   // 之前每一天的對話（給 B、C 建立記憶用）
   for (const day of scenario.days) {
     const sameDay = [];                                  // 今天到目前為止的對話（含譯文）
     for (const turn of day.turns) {
+      if (stopped) break;
       const from = P.CONFIG.roles[turn.role].from;
       const to = P.CONFIG.roles[turn.role].to;
       const { history, notes } = await condition.context({ sameDay, pastDays, P, scenario, day });
@@ -66,9 +72,10 @@ for (const scenario of scenarios) {
           translation = P.Glossary.postFix(turn.text, out.translations[0], from, to, 'gemini');
           by = 'gemini'; ms = out.ms; usage = out.usage;
         } catch (e) {
-          // API 出錯時記錄下來繼續跑，不讓一題的錯誤吞掉整組結果
+          // API 出錯時記錄下來繼續跑，不讓一題的錯誤吞掉整組結果；額度用完則停止
           error = e.message; translation = ''; by = 'error';
           reportError(error);
+          if (e instanceof QuotaError) stopped = error;
         }
       }
       sameDay.push({ role: turn.role, text: turn.text, translation });
@@ -84,6 +91,7 @@ for (const scenario of scenarios) {
         latency_ms: ms, prompt_tokens: usage?.promptTokenCount ?? null, history_turns: history.length, error,
         notes_chars: notes ? notes.length : 0,
       });
+      save();                               // 每題都存檔：被中斷也保得住已完成的結果
     }
     pastDays.push(day);
   }
@@ -91,38 +99,41 @@ for (const scenario of scenarios) {
 }
 }
 
-const passed = results.filter(r => r.pass).length;
-const errors = results.filter(r => r.error).length;
-const gemini = results.filter(r => r.by === 'gemini');
-// 每一題在多次重複中的通過次數，用來看穩定度
-const perProbe = {};
-results.forEach(r => {
-  const k = r.scenario + '｜' + r.text;
-  perProbe[k] = perProbe[k] || { passed: 0, runs: 0, translations: [] };
-  perProbe[k].runs++; if (r.pass) perProbe[k].passed++;
-  if (!perProbe[k].translations.includes(r.translation)) perProbe[k].translations.push(r.translation);
-});
-if (repeat > 1) {
-  console.log('各題穩定度（通過次數／重複次數，不同譯文數）：');
-  Object.entries(perProbe).forEach(([k, v]) => console.log(`  ${v.passed}/${v.runs}  ${v.translations.length} 種  ${k}`));
-}
+save(true);
+if (stopped) die('提早停止：' + stopped);
 
-const summary = {
-  condition: conditionName, model: P.CONFIG.gemini.model, repeat, mock,
-  probes: results.length, passed, errors,
-  pass_rate: results.length ? +(passed / results.length).toFixed(3) : null,
-  avg_latency_ms: gemini.length ? Math.round(gemini.reduce((a, r) => a + r.latency_ms, 0) / gemini.length) : null,
-  avg_prompt_tokens: gemini.length && gemini[0].prompt_tokens != null
-    ? Math.round(gemini.reduce((a, r) => a + (r.prompt_tokens || 0), 0) / gemini.length) : null,
-};
-console.log('SUMMARY ' + JSON.stringify(summary));
-
-if (!mock) {
+/** 計算摘要並寫檔。final 為 true 時印出結果。 */
+function save(final = false) {
+  const passed = results.filter(r => r.pass).length;
+  const errors = results.filter(r => r.error).length;
+  const gemini = results.filter(r => r.by === 'gemini');
+  const perProbe = {};
+  results.forEach(r => {
+    const k = r.scenario + '｜' + r.text;
+    perProbe[k] = perProbe[k] || { passed: 0, runs: 0, translations: [] };
+    perProbe[k].runs++; if (r.pass) perProbe[k].passed++;
+    if (!perProbe[k].translations.includes(r.translation)) perProbe[k].translations.push(r.translation);
+  });
+  const summary = {
+    condition: conditionName, model: P.CONFIG.gemini.model, repeat, mock,
+    probes: results.length, passed, errors,
+    pass_rate: results.length ? +(passed / results.length).toFixed(3) : null,
+    avg_latency_ms: gemini.length ? Math.round(gemini.reduce((a, r) => a + r.latency_ms, 0) / gemini.length) : null,
+    avg_prompt_tokens: gemini.length && gemini[0].prompt_tokens != null
+      ? Math.round(gemini.reduce((a, r) => a + (r.prompt_tokens || 0), 0) / gemini.length) : null,
+    complete: final && !stopped, stopped,
+  };
+  if (final) {
+    if (repeat > 1) {
+      console.log('各題穩定度（通過次數／重複次數，不同譯文數）：');
+      Object.entries(perProbe).forEach(([k, v]) => console.log(`  ${v.passed}/${v.runs}  ${v.translations.length} 種  ${k}`));
+    }
+    console.log('SUMMARY ' + JSON.stringify(summary));
+  }
+  if (mock) return;
   mkdirSync(path.join(here, 'runs'), { recursive: true });
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const file = path.join(here, 'runs', `${conditionName}-${P.CONFIG.gemini.model}-x${repeat}-${stamp}.json`);
-  writeFileSync(file, JSON.stringify({ ran_at: new Date().toISOString(), fixture: 'long-memory.json', summary, per_probe: perProbe, results }, null, 2));
-  console.log('已存檔：' + path.relative(root, file));
+  writeFileSync(outFile, JSON.stringify({ ran_at: startedAt.toISOString(), fixture: 'long-memory.json', summary, per_probe: perProbe, results }, null, 2));
+  if (final) console.log('已存檔：' + path.relative(root, outFile));
 }
 
 function check(probe, t) {

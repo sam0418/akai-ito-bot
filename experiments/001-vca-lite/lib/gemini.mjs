@@ -42,8 +42,15 @@ export async function geminiTranslate(P, reqs, history, extraNotes, opts = {}) {
       body: JSON.stringify(payload),
     });
     const ms = Date.now() - started;
-    if (res.status === 429) {           // 免費方案每分鐘上限：等一下再試
-      await sleep(15000 * (attempt + 1));
+    if (res.status === 429) {
+      const body = await res.text();
+      // 每日額度用完：重試沒有意義，直接停止
+      if (/PerDay|per day|daily/i.test(body)) throw new QuotaError('Gemini 每日額度已用完（' + P.CONFIG.gemini.model + '）');
+      // 每分鐘上限：依伺服器建議的 retryDelay 等待（最多 60 秒），最多重試 2 次
+      const m = body.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);
+      const wait = Math.min(60000, m ? Math.ceil(Number(m[1]) * 1000) + 1000 : 20000);
+      if (attempt === 2) throw new QuotaError('Gemini 持續回傳 429（每分鐘上限）：' + body.replace(/\s+/g, ' ').slice(0, 160));
+      await sleep(wait);
       continue;
     }
     if (!res.ok) throw new Error('Gemini HTTP ' + res.status + ' ' + (await res.text()).slice(0, 200));
@@ -53,7 +60,10 @@ export async function geminiTranslate(P, reqs, history, extraNotes, opts = {}) {
     if (!Array.isArray(translations) || translations.length !== reqs.length) throw new Error('Gemini 回傳筆數不符');
     return { translations, ms, usage: data.usageMetadata || null };
   }
-  throw new Error('Gemini 持續回傳 429，請稍後再跑');
+  throw new QuotaError('Gemini 持續回傳 429，請稍後再跑');
 }
 
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/** 額度錯誤：繼續跑下去只會浪費時間，執行器會直接停止並保存已完成的結果。 */
+export class QuotaError extends Error {}

@@ -145,7 +145,11 @@ function parseArgs(argv) {
   return out;
 }
 
-function die(msg) { console.error(msg); process.exit(1); }
+function die(msg) {
+  console.error(msg);
+  if (process.env.GITHUB_ACTIONS) console.log('::error title=Experiment::' + String(msg).replace(/\s+/g, ' ').slice(0, 300));
+  process.exit(1);
+}
 
 function loadDotEnv(file) {
   if (!existsSync(file)) return;
@@ -158,8 +162,8 @@ function loadDotEnv(file) {
 }
 
 // 在 GitHub Actions 上輸出成 annotation（可以透過 API 讀到），同樣的訊息只報一次
-const reportedErrors = new Set();
 function reportError(msg) {
+  const reportedErrors = (globalThis.__reportedErrors ??= new Set());
   const short = msg.replace(/\s+/g, ' ').slice(0, 300);
   console.error('API 錯誤：' + short);
   if (process.env.GITHUB_ACTIONS && !reportedErrors.has(short)) {

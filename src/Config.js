@@ -21,7 +21,14 @@ const CONFIG = {
   // 翻譯器依序嘗試：前一個失敗的段落才交給下一個。
   // 之後接 Mac mini：把 'macMiniLlm' 放到最前面即可。
   translator: {
-    chain: ['googleGtx', 'languageApp'],
+    // googleGtx 從 Apps Script 呼叫時一律失敗（實測 35/35 都改由 languageApp 完成），先移出翻譯鏈
+    chain: ['languageApp'],
+  },
+
+  // 詞彙表（Glossary.js）：常用短句直接查表、翻譯後修正固定錯誤
+  glossary: {
+    enabled: true,
+    partnerAddress: 'お姉ちゃん',   // 我怎麼稱呼她（日文）。中文的 姐姐／姊姊／你／妳 都會翻成這個
   },
 
   filter: {

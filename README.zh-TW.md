@@ -40,6 +40,7 @@ akai-ito 是部署在 Google Apps Script 上的 LINE Messaging API bot。加入�
 - **自動雙向翻譯**：owner 的訊息翻成日文，partner 的訊息翻成繁體中文。
 - **訊息批次處理**：以 debounce 收集連續訊息，同一個人的連續發言合併成一段翻譯，減少聊天室裡的洗版。
 - **只使用 Reply API**：不使用 Push API，不消耗官方帳號的訊息額度。
+- **詞彙表**：常用短句與語氣詞直接查表翻譯；機器翻譯固定會犯的錯（稱謂、bot 名字、亂補的主詞）在翻譯後自動修正。
 - **翻譯器備援鏈**：主要翻譯器失敗時，只把失敗的段落交給下一個翻譯器。
 - **雜訊過濾**：貼圖、純 emoji、`www`、`笑` 等不翻譯；`!` 開頭的訊息可以手動略過。
 - **群組白名單**：只服務綁定的那一個群組。
@@ -109,6 +110,7 @@ akai-ito-bot/
     ├── Identity.js        # 角色判定、綁定、暫停狀態、授權輔助
     ├── Buffer.js          # 訊息暫存區與對話上下文（Cache + Lock）
     ├── Translators.js     # 翻譯器介面與實作、備援鏈
+    ├── Glossary.js        # 短句表與翻譯後修正
     ├── Pipeline.js        # 分段 → hooks → 翻譯 → hooks → 排版
     ├── Commands.js        # 群組指令
     ├── ChatLog.js         # 對話紀錄（Drive 上的 JSON 檔）
@@ -195,7 +197,9 @@ copy .clasp.json.example .clasp.json      # Windows
 | `roles.partner` | `ja → zh-TW` | partner 的翻譯方向與標示 |
 | `timing.quietMs` | `3000` | 最後一則訊息之後的靜默時間（毫秒） |
 | `timing.maxWaitMs` | `8000` | 單一批次的最長等待時間（毫秒） |
-| `translator.chain` | `['googleGtx', 'languageApp']` | 翻譯器的嘗試順序 |
+| `translator.chain` | `['languageApp']` | 翻譯器的嘗試順序（從 Apps Script 連不到 `googleGtx`） |
+| `glossary.enabled` | `true` | 啟用短句表與翻譯後修正 |
+| `glossary.partnerAddress` | `'お姉ちゃん'` | owner 用日文怎麼稱呼 partner，姐姐／姊姊／你／妳 都會翻成這個 |
 | `filter.skipPrefixes` | `['!', '！']` | 以這些字元開頭的訊息不翻譯 |
 | `filter.noisePatterns` | — | 視為雜訊的正規表示式 |
 | `reply.maxBubbles` | `5` | 單次回覆的訊息上限（LINE 規格） |
@@ -267,6 +271,17 @@ TRANSLATORS.myTranslator = {
 
 ```js
 translator: { chain: ['macMiniLlm', 'googleGtx'] }
+```
+
+### 詞彙表
+
+`src/Glossary.js` 裡的 `GLOSSARY` 分成兩部分：
+
+- `phrases`：每個翻譯方向的 `[pattern, 譯文]`。一段訊息的每一行都命中時直接查表，不經過翻譯引擎。
+- `rules`：翻譯後修正。只有**原文**符合 `ifSource`、且不符合 `unlessSource` 時才套用，不依賴特定翻譯引擎的輸出。`{partner}` 會換成 `glossary.partnerAddress`。
+
+```js
+{ dir: 'ja>zh-TW', ifSource: /イト/, replace: [[/伊藤|伊托/g, 'イト']] }
 ```
 
 ### Hooks

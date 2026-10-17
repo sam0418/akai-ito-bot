@@ -40,6 +40,7 @@ It requires no paid API and no self-hosted server. The translation layer is abst
 - **Bidirectional translation**: owner messages are translated into Japanese; partner messages into Traditional Chinese.
 - **Message batching**: consecutive messages are collected with a debounce, and consecutive messages from the same person are merged into one translated segment to keep the chat clean.
 - **Reply API only**: never uses the Push API, so it does not consume the official account's message quota.
+- **Glossary**: common phrases and interjections are translated from a fixed table, and known machine-translation mistakes (forms of address, the bot's name, invented subjects) are corrected after translation.
 - **Translator fallback chain**: when the primary translator fails, only the failed segments are passed to the next translator.
 - **Noise filtering**: stickers, emoji-only messages, `www`, `笑`, and similar are skipped; messages starting with `!` are skipped on request.
 - **Group allowlist**: serves only the single bound group.
@@ -109,6 +110,7 @@ akai-ito-bot/
     ├── Identity.js        # Role resolution, binding, pause state, authorization helper
     ├── Buffer.js          # Message buffer and conversation context (Cache + Lock)
     ├── Translators.js     # Translator interface, implementations, fallback chain
+    ├── Glossary.js        # Phrase table and post-translation fixes
     ├── Pipeline.js        # Segment → hooks → translate → hooks → format
     ├── Commands.js        # Group commands
     ├── ChatLog.js         # Conversation log (JSON file in Drive)
@@ -195,7 +197,9 @@ copy .clasp.json.example .clasp.json      # Windows
 | `roles.partner` | `ja → zh-TW` | Translation direction and label for the partner |
 | `timing.quietMs` | `3000` | Silence after the last message before flushing (ms) |
 | `timing.maxWaitMs` | `8000` | Maximum time a batch can wait (ms) |
-| `translator.chain` | `['googleGtx', 'languageApp']` | Translator order |
+| `translator.chain` | `['languageApp']` | Translator order (`googleGtx` is unreachable from Apps Script) |
+| `glossary.enabled` | `true` | Enable the phrase table and post-translation fixes |
+| `glossary.partnerAddress` | `'お姉ちゃん'` | How the owner addresses the partner in Japanese; used for 姐姐／姊姊／你／妳 |
 | `filter.skipPrefixes` | `['!', '！']` | Messages starting with these are not translated |
 | `filter.noisePatterns` | — | Regular expressions treated as noise |
 | `reply.maxBubbles` | `5` | Messages per reply (LINE limit) |
@@ -267,6 +271,17 @@ To enable it:
 
 ```js
 translator: { chain: ['macMiniLlm', 'googleGtx'] }
+```
+
+### Glossary
+
+`GLOSSARY` in `src/Glossary.js` has two parts:
+
+- `phrases`: `[pattern, translation]` pairs per direction. When every line of a segment matches, the table is used and the translator is skipped.
+- `rules`: post-translation fixes. Each rule applies only when the **source** matches `ifSource` and not `unlessSource`, so it does not depend on a particular engine's output. `{partner}` is replaced with `glossary.partnerAddress`.
+
+```js
+{ dir: 'ja>zh-TW', ifSource: /イト/, replace: [[/伊藤|伊托/g, 'イト']] }
 ```
 
 ### Hooks

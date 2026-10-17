@@ -2,7 +2,8 @@
 /**
  * 001-vca-lite 實驗執行器
  *
- *   node experiments/001-vca-lite/run.mjs --condition A [--scenario S1-referent-sister] [--pace 4500] [--mock]
+ *   node experiments/001-vca-lite/run.mjs --condition A [--model gemini-3.6-flash] [--repeat 3]
+ *                                         [--scenario S1-referent-sister] [--pace 4500] [--mock]
  *
  * 流程：每個情境依天數重播對話。每一句都會翻譯（讓後面的句子有上下文可用），
  * 只有帶 probe 的台詞計分。翻譯路徑和正式版相同：詞彙表查表 → Gemini → 詞彙表修正。
@@ -32,14 +33,18 @@ const mock = !!args.mock;
 if (!mock && !process.env.GEMINI_API_KEY) die('請先設定環境變數 GEMINI_API_KEY（PowerShell：$env:GEMINI_API_KEY = "你的金鑰"）');
 
 const P = loadProduction(root);
+if (args.model) P.CONFIG.gemini.model = args.model;
+const repeat = Math.max(1, Number(args.repeat || 1));
 const fixture = JSON.parse(readFileSync(path.join(here, 'fixtures', 'long-memory.json'), 'utf8'));
 const scenarios = fixture.scenarios.filter(s => !args.scenario || s.id === args.scenario);
 if (!scenarios.length) die('找不到情境：' + args.scenario);
 
-console.log(`條件 ${conditionName}：${condition.describe}｜模型 ${P.CONFIG.gemini.model}｜${mock ? 'MOCK' : '真實 API'}\n`);
+console.log(`條件 ${conditionName}：${condition.describe}｜模型 ${P.CONFIG.gemini.model}｜重複 ${repeat} 次｜${mock ? 'MOCK' : '真實 API'}\n`);
 
 const results = [];
 let calls = 0;
+for (let rep = 1; rep <= repeat; rep++) {
+if (repeat > 1) console.log(`===== 第 ${rep} / ${repeat} 次 =====`);
 for (const scenario of scenarios) {
   console.log('■ ' + scenario.id + '：' + scenario.about);
   const pastDays = [];                                   // 之前每一天的對話（給 B、C 建立記憶用）
@@ -68,7 +73,7 @@ for (const scenario of scenarios) {
       const problems = check(turn.probe, translation);
       console.log((problems.length ? '❌' : '✅') + line.slice(1) + (problems.length ? '  ｜' + problems.join('；') : ''));
       results.push({
-        scenario: scenario.id, day: day.day, role: turn.role, text: turn.text,
+        rep, scenario: scenario.id, day: day.day, role: turn.role, text: turn.text,
         meaning: turn.probe.meaning, translation, by, pass: problems.length === 0, problems,
         latency_ms: ms, prompt_tokens: usage?.promptTokenCount ?? null, history_turns: history.length,
         notes_chars: notes ? notes.length : 0,
@@ -78,11 +83,25 @@ for (const scenario of scenarios) {
   }
   console.log('');
 }
+}
 
 const passed = results.filter(r => r.pass).length;
 const gemini = results.filter(r => r.by === 'gemini');
+// 每一題在多次重複中的通過次數，用來看穩定度
+const perProbe = {};
+results.forEach(r => {
+  const k = r.scenario + '｜' + r.text;
+  perProbe[k] = perProbe[k] || { passed: 0, runs: 0, translations: [] };
+  perProbe[k].runs++; if (r.pass) perProbe[k].passed++;
+  if (!perProbe[k].translations.includes(r.translation)) perProbe[k].translations.push(r.translation);
+});
+if (repeat > 1) {
+  console.log('各題穩定度（通過次數／重複次數，不同譯文數）：');
+  Object.entries(perProbe).forEach(([k, v]) => console.log(`  ${v.passed}/${v.runs}  ${v.translations.length} 種  ${k}`));
+}
+
 const summary = {
-  condition: conditionName, model: P.CONFIG.gemini.model, mock,
+  condition: conditionName, model: P.CONFIG.gemini.model, repeat, mock,
   probes: results.length, passed,
   pass_rate: results.length ? +(passed / results.length).toFixed(3) : null,
   avg_latency_ms: gemini.length ? Math.round(gemini.reduce((a, r) => a + r.latency_ms, 0) / gemini.length) : null,
@@ -94,8 +113,8 @@ console.log('SUMMARY ' + JSON.stringify(summary));
 if (!mock) {
   mkdirSync(path.join(here, 'runs'), { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const file = path.join(here, 'runs', `${conditionName}-${stamp}.json`);
-  writeFileSync(file, JSON.stringify({ ran_at: new Date().toISOString(), fixture: 'long-memory.json', summary, results }, null, 2));
+  const file = path.join(here, 'runs', `${conditionName}-${P.CONFIG.gemini.model}-x${repeat}-${stamp}.json`);
+  writeFileSync(file, JSON.stringify({ ran_at: new Date().toISOString(), fixture: 'long-memory.json', summary, per_probe: perProbe, results }, null, 2));
   console.log('已存檔：' + path.relative(root, file));
 }
 

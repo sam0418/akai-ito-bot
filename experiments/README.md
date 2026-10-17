@@ -33,6 +33,8 @@
 
 只會用到 repo 內的虛構 fixtures；真實對話資料不在 repo 裡，Actions 也讀不到。
 
+> **額度**：Gemini 的額度以 Google Cloud 專案計算。實驗用的 `GEMINI_API_KEY` 請建立在**另一個專案**，避免實驗耗盡線上 bot 的額度。
+
 ## 資料規則
 
 - `fixtures/`：虛構的測試資料，可以提交。

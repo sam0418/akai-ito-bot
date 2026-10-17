@@ -20,10 +20,16 @@
 `.github/workflows/experiment.yml` 可以在 GitHub 的伺服器上跑實驗（手動觸發）。
 需要先在 repo 的 **Settings → Secrets and variables → Actions** 新增 secret `GEMINI_API_KEY`。
 
-```bash
-gh workflow run experiment.yml -f experiment=001-vca-lite -f condition=A -f repeat=3
-gh run download <run-id>        # 下載 runs/ 結果
-```
+兩種觸發方式：
+
+- **手動**：Actions 頁面 → experiment → Run workflow，填入參數。
+- **推送分支**：在 `exp-run/` 開頭的分支放一份 `experiments/run-request.json`，推上去就會自動執行：
+
+  ```json
+  { "experiment": "001-vca-lite", "condition": "A", "model": "gemini-3.6-flash", "repeat": 3, "pace": 7000 }
+  ```
+
+結果會存成 workflow 的 artifact（`runs-<實驗>-<run id>`），保留 90 天。
 
 只會用到 repo 內的虛構 fixtures；真實對話資料不在 repo 裡，Actions 也讀不到。
 

@@ -1,9 +1,14 @@
-# 在 GitHub Actions 上執行 experiments/ 裡的實驗（手動觸發）。
+# 在 GitHub Actions 上執行 experiments/ 裡的實驗。
+# 觸發方式：
+#   1. 手動觸發（Actions 頁面 → experiment → Run workflow）
+#   2. 推送 exp-run/** 分支：參數放在 experiments/run-request.json
 # 只使用 repo 內的虛構 fixtures；真實對話資料（data/）不在 repo 裡，這裡也碰不到。
 # 金鑰來自 repo secret GEMINI_API_KEY，不會出現在程式碼或紀錄裡。
 name: experiment
 
 on:
+  push:
+    branches: ['exp-run/**']
   workflow_dispatch:
     inputs:
       experiment:
@@ -40,20 +45,46 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Resolve parameters
+        id: params
+        env:
+          IN_EXPERIMENT: ${{ inputs.experiment }}
+          IN_CONDITION: ${{ inputs.condition }}
+          IN_MODEL: ${{ inputs.model }}
+          IN_REPEAT: ${{ inputs.repeat }}
+          IN_PACE: ${{ inputs.pace }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            f=experiments/run-request.json
+            [[ -f "$f" ]] || { echo "缺少 $f"; exit 1; }
+            IN_EXPERIMENT=$(jq -r '.experiment // "001-vca-lite"' "$f")
+            IN_CONDITION=$(jq -r '.condition // "A"' "$f")
+            IN_MODEL=$(jq -r '.model // ""' "$f")
+            IN_REPEAT=$(jq -r '.repeat // 1' "$f")
+            IN_PACE=$(jq -r '.pace // 4500' "$f")
+          fi
+          # 輸入一律先驗證，避免任意字串進到指令裡
+          [[ "$IN_EXPERIMENT" =~ ^[0-9]{3}-[a-z0-9-]+$ ]]      || { echo "invalid experiment"; exit 1; }
+          [[ "$IN_CONDITION" =~ ^[A-Za-z]$ ]]                  || { echo "invalid condition"; exit 1; }
+          [[ -z "$IN_MODEL" || "$IN_MODEL" =~ ^[a-z0-9.-]+$ ]] || { echo "invalid model"; exit 1; }
+          [[ "$IN_REPEAT" =~ ^[0-9]+$ && "$IN_PACE" =~ ^[0-9]+$ ]] || { echo "invalid number"; exit 1; }
+          {
+            echo "experiment=$IN_EXPERIMENT"
+            echo "condition=$IN_CONDITION"
+            echo "model=$IN_MODEL"
+            echo "repeat=$IN_REPEAT"
+            echo "pace=$IN_PACE"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Run experiment
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          EXPERIMENT: ${{ inputs.experiment }}
-          CONDITION: ${{ inputs.condition }}
-          MODEL: ${{ inputs.model }}
-          REPEAT: ${{ inputs.repeat }}
-          PACE: ${{ inputs.pace }}
+          EXPERIMENT: ${{ steps.params.outputs.experiment }}
+          CONDITION: ${{ steps.params.outputs.condition }}
+          MODEL: ${{ steps.params.outputs.model }}
+          REPEAT: ${{ steps.params.outputs.repeat }}
+          PACE: ${{ steps.params.outputs.pace }}
         run: |
-          # 輸入一律先驗證，避免任意字串進到指令裡
-          [[ "$EXPERIMENT" =~ ^[0-9]{3}-[a-z0-9-]+$ ]] || { echo "invalid experiment"; exit 1; }
-          [[ "$CONDITION" =~ ^[A-Za-z]$ ]]             || { echo "invalid condition"; exit 1; }
-          [[ -z "$MODEL" || "$MODEL" =~ ^[a-z0-9.-]+$ ]] || { echo "invalid model"; exit 1; }
-          [[ "$REPEAT" =~ ^[0-9]+$ && "$PACE" =~ ^[0-9]+$ ]] || { echo "invalid number"; exit 1; }
           [[ -n "$GEMINI_API_KEY" ]] || { echo "請先在 repo 設定 secret GEMINI_API_KEY"; exit 1; }
           args=(--condition "$CONDITION" --repeat "$REPEAT" --pace "$PACE")
           [[ -n "$MODEL" ]] && args+=(--model "$MODEL")
@@ -63,7 +94,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: runs-${{ inputs.experiment }}-${{ github.run_id }}
-          path: experiments/${{ inputs.experiment }}/runs/
+          name: runs-${{ steps.params.outputs.experiment }}-${{ github.run_id }}
+          path: experiments/${{ steps.params.outputs.experiment }}/runs/
           if-no-files-found: warn
           retention-days: 90

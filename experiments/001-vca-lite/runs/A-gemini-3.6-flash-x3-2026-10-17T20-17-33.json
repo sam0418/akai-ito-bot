@@ -1,0 +1,20 @@
+{
+  "ran_at": "2026-10-17T20:17:33.618Z",
+  "fixture": "long-memory.json",
+  "summary": {
+    "condition": "A",
+    "model": "gemini-3.6-flash",
+    "repeat": 3,
+    "mock": false,
+    "probes": 0,
+    "passed": 0,
+    "errors": 0,
+    "pass_rate": null,
+    "avg_latency_ms": null,
+    "avg_prompt_tokens": null,
+    "complete": false,
+    "stopped": "Gemini 每日額度已用完（gemini-3.6-flash）"
+  },
+  "per_probe": {},
+  "results": []
+}
